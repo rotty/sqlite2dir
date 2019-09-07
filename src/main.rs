@@ -5,6 +5,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use failure::ResultExt;
 use rusqlite::{Connection, OpenFlags, Row, NO_PARAMS};
 use serde_json as json;
 
@@ -156,7 +157,7 @@ impl TableSink for FileTable {
                         .map_err(|e| io::Error::new(io::ErrorKind::InvalidInput, e))?;
                     Ok(json::Value::String(text))
                 }
-                _ => Err(io::Error::new(
+                Blob(_) => Err(io::Error::new(
                     io::ErrorKind::InvalidInput,
                     UnsupportedInput::Blob,
                 )),
@@ -168,9 +169,11 @@ impl TableSink for FileTable {
     }
 }
 
-fn main() -> Result<(), failure::Error> {
+fn run() -> Result<(), failure::Error> {
     let db = Db::open("test.db")?;
-    let schema = db.read_schema()?;
+    let schema = db
+        .read_schema()
+        .with_context(|e| format!("could not read schema: {}", e))?;
     let mut sink = DirSink::open("out")?;
     sink.write_schema(&schema)?;
     for entry in &schema {
@@ -179,9 +182,22 @@ fn main() -> Result<(), failure::Error> {
             let mut stmt = db.read_table(entry)?;
             let mut rows = stmt.query()?;
             while let Some(row) = rows.next()? {
-                table.write_row(row)?;
+                table.write_row(row).with_context(|e| {
+                    format!("while writing row of table {}: {}", entry.tbl_name, e)
+                })?;
             }
         }
     }
     Ok(())
+}
+
+fn main() -> Result<(), failure::Error> {
+    let rc = match run() {
+        Ok(_) => 0,
+        Err(e) => {
+            eprintln!("{}", e);
+            1
+        }
+    };
+    std::process::exit(rc);
 }
