@@ -1,13 +1,22 @@
+use std::path::PathBuf;
+
 use failure::ResultExt;
+use structopt::StructOpt;
 
 use sqlite2dir::{Db, DirSink, Sink, TableSink};
 
-fn run() -> Result<(), failure::Error> {
-    let db = Db::open("test.db")?;
+#[derive(StructOpt)]
+struct Opt {
+    db_filename: String,
+    output_dir: PathBuf,
+}
+
+fn run(opt: &Opt) -> Result<(), failure::Error> {
+    let db = Db::open(&opt.db_filename)?;
     let schema = db
         .read_schema()
         .with_context(|e| format!("could not read schema: {}", e))?;
-    let mut sink = DirSink::open("out")?;
+    let mut sink = DirSink::open(&opt.output_dir)?;
     sink.write_schema(&schema)?;
     for entry in &schema {
         if entry.kind == "table" {
@@ -25,7 +34,8 @@ fn run() -> Result<(), failure::Error> {
 }
 
 fn main() -> Result<(), failure::Error> {
-    let rc = match run() {
+    let opt = Opt::from_args();
+    let rc = match run(&opt) {
         Ok(_) => 0,
         Err(e) => {
             eprintln!("{}", e);
