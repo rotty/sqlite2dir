@@ -14,7 +14,7 @@ struct SchemaEntry {
     name: String,
     tbl_name: String,
     column_names: Vec<String>,
-    sql: String,
+    sql: Option<String>,
 }
 
 #[derive(Debug)]
@@ -107,8 +107,11 @@ impl Sink for DirSink {
 
     fn write_schema(&mut self, entries: &[SchemaEntry]) -> io::Result<()> {
         for entry in entries {
-            let mut file = self.open_file(format!("schema/{}/{}.sql", entry.kind, entry.name))?;
-            file.write_all(entry.sql.as_bytes())?;
+            if let Some(sql) = &entry.sql {
+                let mut file =
+                    self.open_file(format!("schema/{}/{}.sql", entry.kind, entry.name))?;
+                file.write_all(sql.as_bytes())?;
+            }
         }
         Ok(())
     }
