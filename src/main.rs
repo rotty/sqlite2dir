@@ -10,7 +10,7 @@ const DIFF_LINE_CONTEXT: char = ' ';
 const DIFF_LINE_ADDITION: char = '+';
 const DIFF_LINE_DELETION: char = '-';
 
-/// Create a dump of an SQLite database.
+/// Create a dump of an SQLite database to a directory.
 #[derive(StructOpt)]
 struct Opt {
     /// SQLite database to read from.

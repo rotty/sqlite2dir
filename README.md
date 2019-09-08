@@ -58,6 +58,10 @@ been chosen to fulfill the following criteria:
 - Allow streaming creation and consumption with JSON parsers and
   serializers that operate on whole values.
 
+Note that the SQLite "blob" data type is not yet supported, and the
+database dump will be aborted if a blob is encountered. See "Planned
+features" below for details.
+
 ## Planned features
 
 These features are planned, roughly in the order of the author's
@@ -72,6 +76,11 @@ perceived importance.
       be used for monitoring purposes.
 - [ ] Write a proper manual page.
 - [ ] A test harness including some basic smoke tests.
+- [ ] Support for the SQLite "blob" data type. A basic implementation
+      would be to hash the blob content, and spit it out disk as its
+      own file. The DB column would then contain a reference like
+      `{"blob-sha3-256": "SHA-3-here"}`. An improvement would be to
+      base64-encode small blobs, and store them inline.
 
 ## Example use case
 
