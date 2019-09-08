@@ -42,21 +42,31 @@ impl GitRepo {
         };
         let oid = sink.tree.write()?;
         let tree = self.repo.find_tree(oid)?;
-        // TODO: if `head` is given, compare the trees, and skip commit if no
-        // changes.
-        let parent_refs: Vec<_> = head.iter().collect();
-        let parent_commits: Vec<git2::Commit<'_>> = parent_refs
-            .iter()
-            .map(|r| r.peel_to_commit())
-            .collect::<Result<_, _>>()?;
-        self.repo.commit(
-            Some("HEAD"),
-            &authored,
-            &authored,
-            message,
-            &tree,
-            &parent_commits.iter().collect::<Vec<_>>(),
-        )?;
+        let need_commit = if let Some(head) = &head {
+            let old_tree = head.peel_to_tree()?;
+            let diff = self
+                .repo
+                .diff_tree_to_tree(Some(&old_tree), Some(&tree), None)?;
+            diff.deltas().len() > 0
+        } else {
+            // Initial commit
+            true
+        };
+        if need_commit {
+            let parent_refs: Vec<_> = head.iter().collect();
+            let parent_commits: Vec<git2::Commit<'_>> = parent_refs
+                .iter()
+                .map(|r| r.peel_to_commit())
+                .collect::<Result<_, _>>()?;
+            self.repo.commit(
+                Some("HEAD"),
+                &authored,
+                &authored,
+                message,
+                &tree,
+                &parent_commits.iter().collect::<Vec<_>>(),
+            )?;
+        }
         Ok(())
     }
 }

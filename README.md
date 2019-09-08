@@ -52,7 +52,6 @@ file per table with the table contents.
 These features are planned, roughly in the order of the author's
 perceived importance.
 
-- [ ] **Only commit when the tree actually changed**.
 - [ ] Create the bare git repository if it doesn't exist.
 - [ ] Pull email and username from the git config, if not given on the
       command line. Add a `--git` switch to enforce git operation the
