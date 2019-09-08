@@ -28,14 +28,12 @@ which will end up installing the executable in
 variable, if you followed the Rust toolchain installations
 instructions.
 
-`sqlite2dir` is *not* yet published on `crates.io`. Once that happens,
+`sqlite2dir` is *not* yet published on [`crates.io`]. Once that happens,
 you will be able to install the latest release using:
 
 ```sh
 cargo install sqlite2dir
 ```
-
-[Rust toolchain]: https://www.rust-lang.org/tools/install
 
 ## Usage
 
@@ -49,11 +47,19 @@ Inside the newly created `db-contents` directory, you will find a
 collection of SQL files containing the database Schema, and a JSON
 file per table with the table contents.
 
+## Planned features
+
+- [ ] Write a proper manual page.
+- [ ] Create the bare git repository if it doesn't exist.
+- [ ] Add options `--git-diff` and `--git-diff-exit-code`, which can
+      be used for monitoring purposes.
+- [ ] A test harness including some basic smoke tests.
+
 ## Example use case
 
 This is the scenario which prompted the development of `sqlite2dir`.
 
-The PowerDNS (aka `pdns`) authoritative nameserver
+The [PowerDNS] (aka `pdns`) authoritative nameserver
 provides several database backend, in addition to the "bind" backend,
 which operates on plain-text zone files. The use of a database backend
 is more flexible, but prevents easily tracking changes to the zone
@@ -80,3 +86,7 @@ other analysis.
 The code and documentation in the `sqlite2dir` crate is [free
 software](https://www.gnu.org/philosophy/free-sw.html), licensed under
 the [GNU GPL](./LICENSE), version 3.0 or later, at your option.
+
+[Rust toolchain]: https://www.rust-lang.org/tools/install
+[PowerDNS]: https://www.powerdns.com/
+[crates.io]: https://crates.io/
