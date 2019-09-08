@@ -14,26 +14,25 @@ and hasn't even been deployed by its author. The usual caveats apply.
 ## Installation
 
 As `sqlite2dir` is written in Rust, you need a [Rust toolchain]. Rust
-1.37 or newer is required. Once you have that, you can run it directly
-from the source checkout:
+1.37 or newer is required. To obtain the latest release from
+[`crates.io`], use:
+
+```sh
+cargo install sqlite2dir
+```
+
+Alternatively, you can run it directly from the source checkout:
 
 ```sh
 cargo run -- --help
 cargo run -- db.sqlite3 db-contents
 ```
 
-To install, use `cargo install --path .` from the source checkout,
-which will end up installing the executable in
+To install from locally checked-out source, use `cargo install --path
+.`, which will end up installing the executable in
 `~/.cargo/bin/sqlite2dir`, which should be in your `PATH` environment
 variable, if you followed the Rust toolchain installations
 instructions.
-
-`sqlite2dir` is *not* yet published on [`crates.io`]. Once that happens,
-you will be able to install the latest release using:
-
-```sh
-cargo install sqlite2dir
-```
 
 ### Static build
 
