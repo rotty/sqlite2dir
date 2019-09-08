@@ -134,4 +134,4 @@ the [GNU GPL](./LICENSE), version 3.0 or later, at your option.
 
 [Rust toolchain]: https://www.rust-lang.org/tools/install
 [PowerDNS]: https://www.powerdns.com/
-[crates.io]: https://crates.io/
+[`crates.io`]: https://crates.io/
