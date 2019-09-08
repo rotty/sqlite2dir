@@ -35,6 +35,25 @@ you will be able to install the latest release using:
 cargo install sqlite2dir
 ```
 
+### Static build
+
+For deployment to a Linux target, an attractive option is to create a
+statically linked binary using Rust's MUSL target. This will result in
+a completely standalone binary, which depends only on the Linux
+kernel's system call ABI.
+
+In this case, you need to enable the `vendored-sqlite` feature flag to
+link against an embedded, newly-compiled, copy of `libsqlite3`:
+
+```sh
+# If you haven't installed the MUSL target already, let's do that now":
+rustup target add x86_64-unknown-linux-musl
+# Build using a compiled-in copy of libsqlite3
+cargo build --target x86_64-unknown-linux-musl --features vendored-sqlite --release
+# Let's check it's really a static binary
+file file target/x86_64-unknown-linux-musl/release/sqlite2dir | grep -q 'statically linked' || echo "nope"
+```
+
 ## Usage
 
 Create a dump of an sqlite3 database to a directory:
