@@ -1,2 +1,6 @@
 /target
 **/*.rs.bk
+
+# Generated man page. This is not built per default, but following the
+# README will result in cration of that file.
+/sqlite2dir.1

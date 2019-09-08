@@ -11,6 +11,17 @@ changes using regular git tools.
 Note that `sqlite2dir` is currently in its initial development phase,
 and hasn't even been deployed by its author. The usual caveats apply.
 
+## Documentation
+
+The documentation for `sqlite2dir` comes in the form of [man
+page](./sqlite2dir.1.md). The markdown file can be turned in to troff
+format for viewing with the `man` command using [pandoc]:
+
+``sh
+pandoc -s -t man sqlite2dir.1.md -o sqlite2dir.1
+man -l sqlite2dir.1
+``
+
 ## Installation
 
 As `sqlite2dir` is written in Rust, you need a [Rust toolchain]. Rust
@@ -135,3 +146,4 @@ the [GNU GPL](./LICENSE), version 3.0 or later, at your option.
 [Rust toolchain]: https://www.rust-lang.org/tools/install
 [PowerDNS]: https://www.powerdns.com/
 [`crates.io`]: https://crates.io/
+[pandoc]: https://pandoc.org/
