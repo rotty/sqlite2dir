@@ -47,6 +47,17 @@ Inside the newly created `db-contents` directory, you will find a
 collection of SQL files containing the database Schema, and a JSON
 file per table with the table contents.
 
+The format of the SQL table data files is a stream of JSON arrays,
+each row being a single line containing a stand-alone JSON array
+containing the column data for a single database row. This format has
+been chosen to fulfill the following criteria:
+
+- Reasonable diff output, while preserving the type of the values. In
+  particular, NULL values are represented as JSON `null`, and so can
+  be disambiguated from a "NULL" string or an empty string.
+- Allow streaming creation and consumption with JSON parsers and
+  serializers that operate on whole values.
+
 ## Planned features
 
 These features are planned, roughly in the order of the author's
