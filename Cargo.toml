@@ -1,10 +1,12 @@
 [package]
 name = "sqlite2dir"
+description = "Dump sqlite3 databases to the filesystem"
+repository = "https://r0tty.org/git/rust/sqlite2dir/"
+readme = "README.md"
 version = "0.1.0"
 authors = ["Andreas Rottmann <a.rottmann@gmx.at>"]
+license = "GPL-3.0-or-later"
 edition = "2018"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 rusqlite = "0.20.0"
