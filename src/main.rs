@@ -1,18 +1,29 @@
-use std::path::PathBuf;
+use std::{io, path::PathBuf};
 
 use failure::{format_err, ResultExt};
 use structopt::StructOpt;
 
 use sqlite2dir::{Db, DirSink, GitRepo, Sink, TableSink};
 
+// These seem to be missing from the `git2` bindings.
+const DIFF_LINE_CONTEXT: char = ' ';
+const DIFF_LINE_ADDITION: char = '+';
+const DIFF_LINE_DELETION: char = '-';
+
 #[derive(StructOpt)]
 struct Opt {
     db_filename: String,
     output_dir: PathBuf,
-    #[structopt(long("git-name"))]
+    #[structopt(long = "git-name")]
     git_name: Option<String>,
-    #[structopt(long("git-email"))]
+    #[structopt(long = "git-email")]
     git_email: Option<String>,
+    #[structopt(long = "git-message")]
+    git_message: Option<String>,
+    #[structopt(long = "git-diff")]
+    git_diff: bool,
+    #[structopt(long = "git-diff-exit-code")]
+    git_diff_exit_code: bool,
 }
 
 impl Opt {
@@ -21,6 +32,12 @@ impl Opt {
             (Some(name), Some(email)) => Ok(Some(git2::Signature::now(name, email)?)),
             _ => Ok(None),
         }
+    }
+    fn git_message(&self) -> &str {
+        self.git_message
+            .as_ref()
+            .map(|msg| msg.as_str())
+            .unwrap_or("sqlite2dir auto-commit")
     }
 }
 
@@ -46,30 +63,67 @@ fn fill_sink(sink: &mut impl Sink, db: &Db) -> Result<(), failure::Error> {
     Ok(())
 }
 
-fn run(opt: &Opt) -> Result<(), failure::Error> {
+fn show_diff_line(mut writer: impl io::Write, line: &git2::DiffLine) -> io::Result<()> {
+    match line.origin() {
+        DIFF_LINE_ADDITION | DIFF_LINE_CONTEXT | DIFF_LINE_DELETION => {
+            let mut buf = [0; 4];
+            let origin = line.origin().encode_utf8(&mut buf);
+            writer.write_all(origin.as_bytes())?;
+            writer.write_all(line.content())?;
+        }
+        _ => writer.write_all(line.content())?,
+    }
+    Ok(())
+}
+
+fn run(opt: &Opt) -> Result<i32, failure::Error> {
     let db = Db::open(&opt.db_filename)?;
     match GitRepo::open(&opt.output_dir) {
         Ok(repo) => {
             let authored = opt.git_authored()?.ok_or_else(|| {
                 format_err!("git target detected, but required options not provided")
             })?;
-            let message = "sqlite2dir auto-commit";
             let mut tree = repo.tree()?;
             fill_sink(&mut tree, &db)?;
-            repo.commit(message, &authored, tree)?;
+            let diff = repo.commit(opt.git_message(), &authored, tree)?;
+            if opt.git_diff {
+                let stdout = io::stdout();
+                let stdout = stdout.lock();
+                let mut writer = io::BufWriter::new(stdout);
+                diff.print(
+                    git2::DiffFormat::Patch,
+                    |_delta, _hunk, line| match show_diff_line(&mut writer, &line) {
+                        Ok(_) => true,
+                        Err(e) => {
+                            eprintln!("I/O error while showing diff: {}", e);
+                            false
+                        }
+                    },
+                )?;
+            }
+            let rc = if opt.git_diff_exit_code {
+                if diff.deltas().len() > 0 {
+                    1
+                } else {
+                    0
+                }
+            } else {
+                0
+            };
+            Ok(rc)
         }
         Err(_) => {
             let mut sink = DirSink::open(&opt.output_dir)?;
             fill_sink(&mut sink, &db)?;
+            Ok(0)
         }
     }
-    Ok(())
 }
 
 fn main() -> Result<(), failure::Error> {
     let opt = Opt::from_args();
     let rc = match run(&opt) {
-        Ok(_) => 0,
+        Ok(rc) => rc,
         Err(e) => {
             eprintln!("{}", e);
             1

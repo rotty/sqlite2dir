@@ -34,7 +34,7 @@ impl GitRepo {
         message: &str,
         authored: &git2::Signature,
         sink: TreeSink,
-    ) -> Result<(), git2::Error> {
+    ) -> Result<git2::Diff, git2::Error> {
         let head = match self.repo.head() {
             Ok(head) => Some(head),
             Err(ref e) if e.code() == git2::ErrorCode::UnbornBranch => None,
@@ -42,17 +42,11 @@ impl GitRepo {
         };
         let oid = sink.tree.write()?;
         let tree = self.repo.find_tree(oid)?;
-        let need_commit = if let Some(head) = &head {
-            let old_tree = head.peel_to_tree()?;
-            let diff = self
-                .repo
-                .diff_tree_to_tree(Some(&old_tree), Some(&tree), None)?;
-            diff.deltas().len() > 0
-        } else {
-            // Initial commit
-            true
-        };
-        if need_commit {
+        let old_tree = head.as_ref().map(|r| r.peel_to_tree()).transpose()?;
+        let diff = self
+            .repo
+            .diff_tree_to_tree(old_tree.as_ref(), Some(&tree), None)?;
+        if diff.deltas().len() > 0 {
             let parent_refs: Vec<_> = head.iter().collect();
             let parent_commits: Vec<git2::Commit<'_>> = parent_refs
                 .iter()
@@ -67,7 +61,7 @@ impl GitRepo {
                 &parent_commits.iter().collect::<Vec<_>>(),
             )?;
         }
-        Ok(())
+        Ok(diff)
     }
 }
 
