@@ -4,7 +4,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use crate::{write_json_row, SchemaEntry, Sink, TableSink};
+use crate::{util::write_json_row, SchemaEntry, Sink, TableSink};
 
 #[derive(Debug)]
 pub struct DirSink {
@@ -31,13 +31,10 @@ impl DirSink {
 impl Sink for DirSink {
     type TableSink = FileTable;
 
-    fn write_schema(&mut self, entries: &[SchemaEntry]) -> io::Result<()> {
-        for entry in entries {
-            if let Some(sql) = &entry.sql {
-                let mut file =
-                    self.open_file(format!("schema/{}/{}.sql", entry.kind, entry.name))?;
-                file.write_all(sql.as_bytes())?;
-            }
+    fn write_schema_entry(&mut self, entry: &SchemaEntry) -> io::Result<()> {
+        if let Some(sql) = &entry.sql {
+            let mut file = self.open_file(format!("schema/{}/{}.sql", entry.kind, entry.name))?;
+            file.write_all(sql.as_bytes())?;
         }
         Ok(())
     }
@@ -45,6 +42,9 @@ impl Sink for DirSink {
         Ok(FileTable {
             file: self.open_file(format!("data/table/{}.json", name.as_ref()))?,
         })
+    }
+    fn close_table(&mut self, _table: FileTable) -> io::Result<()> {
+        Ok(())
     }
 }
 
