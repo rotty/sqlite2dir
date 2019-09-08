@@ -49,10 +49,17 @@ file per table with the table contents.
 
 ## Planned features
 
-- [ ] Write a proper manual page.
+These features are planned, roughly in the order of the author's
+perceived importance.
+
+- [ ] **Only commit when the tree actually changed**.
 - [ ] Create the bare git repository if it doesn't exist.
+- [ ] Pull email and username from the git config, if not given on the
+      command line. Add a `--git` switch to enforce git operation the
+      absence of other `--git-...` options.
 - [ ] Add options `--git-diff` and `--git-diff-exit-code`, which can
       be used for monitoring purposes.
+- [ ] Write a proper manual page.
 - [ ] A test harness including some basic smoke tests.
 
 ## Example use case
