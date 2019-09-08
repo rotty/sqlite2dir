@@ -10,18 +10,28 @@ const DIFF_LINE_CONTEXT: char = ' ';
 const DIFF_LINE_ADDITION: char = '+';
 const DIFF_LINE_DELETION: char = '-';
 
+/// Create a dump of an SQLite database.
 #[derive(StructOpt)]
 struct Opt {
+    /// SQLite database to read from.
     db_filename: String,
+    /// Output directory or git bare repository.
     output_dir: PathBuf,
+    /// Author name to use for git commits.
     #[structopt(long = "git-name")]
     git_name: Option<String>,
+    /// Author email to use for git commits.
     #[structopt(long = "git-email")]
     git_email: Option<String>,
+    /// Commit message for git commits.
+    ///
+    /// If not given, a default message will be used.
     #[structopt(long = "git-message")]
     git_message: Option<String>,
+    /// Show a diff when something changed.
     #[structopt(long = "git-diff")]
     git_diff: bool,
+    /// Exit with status 1 when there were changes.
     #[structopt(long = "git-diff-exit-code")]
     git_diff_exit_code: bool,
 }
