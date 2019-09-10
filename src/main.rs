@@ -17,6 +17,9 @@ struct Opt {
     db_filename: String,
     /// Output directory or git bare repository.
     output_dir: PathBuf,
+    /// Use git.
+    #[structopt(long = "git")]
+    git: bool,
     /// Author name to use for git commits.
     #[structopt(long = "git-name")]
     git_name: Option<String>,
@@ -48,6 +51,13 @@ impl Opt {
             .as_ref()
             .map(|msg| msg.as_str())
             .unwrap_or("sqlite2dir auto-commit")
+    }
+    fn use_git(&self) -> bool {
+        self.git
+            || self.git_diff
+            || self.git_diff_exit_code
+            || self.git_email.is_some()
+            || self.git_name.is_some()
     }
 }
 
@@ -122,7 +132,13 @@ fn run(opt: &Opt) -> Result<i32, failure::Error> {
             };
             Ok(rc)
         }
-        Err(_) => {
+        Err(e) => {
+            if opt.use_git() {
+                return Err(format_err!(
+                    "could not open destination as bare git repository: {}",
+                    e
+                ));
+            }
             let mut sink = DirSink::open(&opt.output_dir)?;
             fill_sink(&mut sink, &db)?;
             Ok(0)

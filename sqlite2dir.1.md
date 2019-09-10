@@ -28,21 +28,27 @@ various `--git-...` options, which are documented below.
 
 # OPTIONS
 
+\--git
+: Refuse operation if the destination is not a bare git repository.
+
 \--git-diff
-: When committing a change, show a diff of the changes on stdout.
+: When committing a change, show a diff of the changes on
+  stdout. Implies `--git`.
 
 \--git-diff-exit-code
 : After committing a change, exit with status 1. This is useful for
-  reacting to this condition, for example from shell scripts.
+  reacting to this condition, for example from shell scripts. Implies
+  `--git`.
 
 \--git-message=*message*
-: Commit message for git commits. If not given, a default message will be used.
+: Commit message for git commits. If not given, a default message will
+  be used. Implies `--git`.
 
 \--git-name=*name*
-: Author name to use for git commits.
+: Author name to use for git commits. Implies `--git`.
 
 \--git-email=*git-email*
-: Author email to use for git commits.
+: Author email to use for git commits. Implies `--git`.
 
 -h, \--help
 : Show usage message.
