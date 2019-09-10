@@ -26,6 +26,13 @@ to the repository when the database content changed from the
 repository `HEAD` commit. The commit metadata can be influenced by the
 various `--git-...` options, which are documented below.
 
+Note that `sqlite2dir1` uses `libgit2` for its git support, not the
+`git` command-line executable. This mean that its resource profile
+should be very lightweight, making it realistic to run it very
+frequently with minimal impact to system load, at least for small
+databases. Also, as might be expected, `git` doesn't need to be
+installed to make use of the git support.
+
 # OPTIONS
 
 \--git
