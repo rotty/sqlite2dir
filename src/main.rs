@@ -3,7 +3,7 @@ use std::{io, path::PathBuf};
 use failure::{format_err, ResultExt};
 use structopt::StructOpt;
 
-use sqlite2dir::{Db, DirSink, GitRepo, Sink, TableSink};
+use sqlite2dir::{dir, git, Db, Sink, TableSink};
 
 // These seem to be missing from the `git2` bindings.
 const DIFF_LINE_CONTEXT: char = ' ';
@@ -96,52 +96,66 @@ fn show_diff_line(mut writer: impl io::Write, line: &git2::DiffLine) -> io::Resu
     Ok(())
 }
 
+fn run_with_git(
+    db: &Db,
+    repo: &git::Repo,
+    authored: &git2::Signature,
+    opt: &Opt,
+) -> Result<i32, failure::Error> {
+    let mut tree = repo.tree()?;
+    fill_sink(&mut tree, &db)?;
+    let diff = repo.commit(opt.git_message(), &authored, tree)?;
+    if opt.git_diff {
+        let stdout = io::stdout();
+        let stdout = stdout.lock();
+        let mut writer = io::BufWriter::new(stdout);
+        diff.print(
+            git2::DiffFormat::Patch,
+            |_delta, _hunk, line| match show_diff_line(&mut writer, &line) {
+                Ok(_) => true,
+                Err(e) => {
+                    eprintln!("I/O error while showing diff: {}", e);
+                    false
+                }
+            },
+        )?;
+    }
+    let rc = if opt.git_diff_exit_code && diff.deltas().len() > 0 {
+        1
+    } else {
+        0
+    };
+    Ok(rc)
+}
+
 fn run(opt: &Opt) -> Result<i32, failure::Error> {
     let db = Db::open(&opt.db_filename)?;
-    match GitRepo::open(&opt.output_dir) {
+    match git::Repo::open(&opt.output_dir) {
         Ok(repo) => {
             let authored = opt.git_authored()?.ok_or_else(|| {
-                format_err!("git target detected, but required options not provided")
+                format_err!("git destination detected, but required options not provided")
             })?;
-            let mut tree = repo.tree()?;
-            fill_sink(&mut tree, &db)?;
-            let diff = repo.commit(opt.git_message(), &authored, tree)?;
-            if opt.git_diff {
-                let stdout = io::stdout();
-                let stdout = stdout.lock();
-                let mut writer = io::BufWriter::new(stdout);
-                diff.print(
-                    git2::DiffFormat::Patch,
-                    |_delta, _hunk, line| match show_diff_line(&mut writer, &line) {
-                        Ok(_) => true,
-                        Err(e) => {
-                            eprintln!("I/O error while showing diff: {}", e);
-                            false
-                        }
-                    },
-                )?;
-            }
-            let rc = if opt.git_diff_exit_code {
-                if diff.deltas().len() > 0 {
-                    1
-                } else {
-                    0
-                }
-            } else {
-                0
-            };
-            Ok(rc)
+            run_with_git(&db, &repo, &authored, &opt)
         }
         Err(e) => {
             if opt.use_git() {
-                return Err(format_err!(
-                    "could not open destination as bare git repository: {}",
-                    e
-                ));
+                if let Some(git2::ErrorCode::NotFound) = e.code() {
+                    let authored = opt.git_authored()?.ok_or_else(|| {
+                        format_err!("git mode requested, but required options not provided")
+                    })?;
+                    let repo = git::Repo::create(&opt.output_dir)?;
+                    run_with_git(&db, &repo, &authored, &opt)
+                } else {
+                    Err(format_err!(
+                        "could not open destination as bare git repository: {}",
+                        e
+                    ))
+                }
+            } else {
+                let mut sink = dir::Sink::open(&opt.output_dir)?;
+                fill_sink(&mut sink, &db)?;
+                Ok(0)
             }
-            let mut sink = DirSink::open(&opt.output_dir)?;
-            fill_sink(&mut sink, &db)?;
-            Ok(0)
         }
     }
 }

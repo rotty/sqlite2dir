@@ -1,4 +1,4 @@
-use std::{collections::HashMap, io, path::Path};
+use std::{collections::HashMap, fmt, fs, io, path::Path};
 
 use crate::{
     util::{other_io_error, write_json_row},
@@ -9,24 +9,70 @@ use crate::{
 const FILEMODE_BLOB: i32 = 0o100644;
 const FILEMODE_TREE: i32 = 0o040000;
 
-pub struct GitRepo {
+pub struct Repo {
     repo: git2::Repository,
 }
 
-impl GitRepo {
-    pub fn open(path: impl AsRef<Path>) -> Result<Self, git2::Error> {
-        Ok(GitRepo {
+#[derive(Debug)]
+pub enum Error {
+    Io(io::Error),
+    Git(git2::Error),
+}
+
+impl Error {
+    pub fn code(&self) -> Option<git2::ErrorCode> {
+        match self {
+            Error::Git(e) => Some(e.code()),
+            _ => None,
+        }
+    }
+}
+
+impl From<io::Error> for Error {
+    fn from(e: io::Error) -> Self {
+        Error::Io(e)
+    }
+}
+
+impl From<git2::Error> for Error {
+    fn from(e: git2::Error) -> Self {
+        Error::Git(e)
+    }
+}
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Error::Io(e) => write!(f, "I/O error: {}", e),
+            Error::Git(e) => write!(f, "git error: {}", e),
+        }
+    }
+}
+
+impl std::error::Error for Error {}
+
+impl Repo {
+    pub fn open(path: impl AsRef<Path>) -> Result<Self, Error> {
+        Ok(Repo {
             repo: git2::Repository::open_bare(path)?,
         })
     }
 
-    pub fn tree(&self) -> Result<TreeSink, git2::Error> {
-        self.repo.treebuilder(None).map(|builder| TreeSink {
+    pub fn create(path: impl AsRef<Path>) -> Result<Self, Error> {
+        let path = path.as_ref();
+        fs::create_dir(path)?;
+        Ok(Repo {
+            repo: git2::Repository::init_bare(path)?,
+        })
+    }
+
+    pub fn tree(&self) -> Result<TreeSink, Error> {
+        Ok(self.repo.treebuilder(None).map(|builder| TreeSink {
             repo: &self.repo,
             tree: builder,
             table_entries: Default::default(),
             schema_entries: Default::default(),
-        })
+        })?)
     }
 
     pub fn commit(
@@ -34,11 +80,11 @@ impl GitRepo {
         message: &str,
         authored: &git2::Signature,
         sink: TreeSink,
-    ) -> Result<git2::Diff, git2::Error> {
+    ) -> Result<git2::Diff, Error> {
         let head = match self.repo.head() {
             Ok(head) => Some(head),
             Err(ref e) if e.code() == git2::ErrorCode::UnbornBranch => None,
-            Err(e) => return Err(e),
+            Err(e) => return Err(e.into()),
         };
         let oid = sink.tree.write()?;
         let tree = self.repo.find_tree(oid)?;

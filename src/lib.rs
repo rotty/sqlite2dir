@@ -38,11 +38,9 @@ impl fmt::Display for UnsupportedInput {
 
 impl std::error::Error for UnsupportedInput {}
 
-mod dir;
-mod git;
+pub mod dir;
+pub mod git;
 mod sqlite;
 mod util;
 
-pub use dir::DirSink;
-pub use git::GitRepo;
 pub use sqlite::Db;

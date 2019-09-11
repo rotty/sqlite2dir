@@ -4,18 +4,18 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use crate::{util::write_json_row, SchemaEntry, Sink, TableSink};
+use crate::{util::write_json_row, SchemaEntry, Sink as SinkTrait, TableSink};
 
 #[derive(Debug)]
-pub struct DirSink {
+pub struct Sink {
     path: PathBuf,
 }
 
-impl DirSink {
+impl Sink {
     pub fn open(path: impl AsRef<Path>) -> io::Result<Self> {
         // TODO: this should create, exclusively, and ideally obtain a handle to
         // the directory.
-        Ok(DirSink {
+        Ok(Sink {
             path: path.as_ref().to_owned(),
         })
     }
@@ -28,7 +28,7 @@ impl DirSink {
     }
 }
 
-impl Sink for DirSink {
+impl SinkTrait for Sink {
     type TableSink = FileTable;
 
     fn write_schema_entry(&mut self, entry: &SchemaEntry) -> io::Result<()> {
