@@ -47,9 +47,10 @@ installed to make use of the git support.
   stdout. Implies `--git`.
 
 \--git-diff-exit-code
-: After committing a change, exit with status 1. This is useful for
-  reacting to this condition, for example from shell scripts. Implies
-  `--git`.
+: After successfully committing a change, exit with status 1, in case
+  of error, with status 2. Useful if `sqlite2dir` is invoked
+  programmatically. This is the same convention as used by
+  `diff(1)`. Implies `--git`.
 
 \--git-message=*message*
 : Commit message for git commits. If not given, a default message will
@@ -66,6 +67,17 @@ installed to make use of the git support.
 
 -V, \--version
 : Prints version information.
+
+# EXIT STATUS
+
+When `--git-diff-exit-code` is not specified, `sqlite2dir` will exit
+with status 0 if the operation succeeded, and with exit status 1 when
+an error happened, such as an I/O or database error.
+
+With the `--git-diff-exit-code` option, exit status 1 indicates
+changes were successfully committed, while 2 is used to indicate
+failure, instead of 1. A zero exit status in this case indicates that
+the database exported is unchanged, compared to the last commit.
 
 # SEE ALSO
 

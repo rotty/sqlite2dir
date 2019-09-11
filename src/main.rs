@@ -152,7 +152,11 @@ fn main() -> Result<(), failure::Error> {
         Ok(rc) => rc,
         Err(e) => {
             eprintln!("{}", e);
-            1
+            if opt.git_diff_exit_code {
+                2
+            } else {
+                1
+            }
         }
     };
     std::process::exit(rc);
