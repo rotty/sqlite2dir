@@ -22,33 +22,10 @@ changes using regular git tools.
 
 Normally, *output-directory* must not already exist, and is freshly
 created by __sqlite2dir__. This is not the case when the git mode is
-used, which can be enabled by any of the __\--git-...__ options, and is
-automatically enabled when *output-directory* is identified as bare
-git repository. Git mode is described in more detail below.
-
-# GIT MODE
-
-When *output-directory* already exists, and it contains a git bare
-repository, the git support is enabled, and a new commit will be added
-to the repository when the database content changed from the
-repository `HEAD` commit. The commit metadata can be influenced by the
-various __\--git-...__ options, which are documented below. When a bare
-git repository is detected as destination, __sqlite2dir__ will refuse
-to operate unless __\--git-name__ and __\--git-email__ are given;
-__sqlite2dir__ will currently not consulting the user's git
-configuration for these values.
-
-When *output-directory* does not exist, and any of the __\--git-...__
-options is specified, a new bare git repository is created with the
-given directory. The directory name given is taken literally, no
-".git" is appended if it is missing.
-
-Note that __sqlite2dir__ uses `libgit2` for its git support, not the
-__git__ command-line executable. This mean that its resource profile
-should be very lightweight, making it realistic to run it very
-frequently with minimal impact to system load, at least for small
-databases. Also, as might be expected, `git` doesn't need to be
-installed to make use of the git support.
+used, which can be enabled by any of the __\--git-...__ options, and
+is automatically enabled when *output-directory* is identified as bare
+git repository. Git mode is described in more detail in the section
+"GIT MODE".
 
 # OPTIONS
 
@@ -80,6 +57,68 @@ installed to make use of the git support.
 
 -V, \--version
 : Prints version information.
+
+# GIT MODE
+
+When *output-directory* already exists, and it contains a git bare
+repository, the git support is enabled, and a new commit will be added
+to the repository when the database content changed from the
+repository `HEAD` commit. The commit metadata can be influenced by the
+various __\--git-...__ options, which are documented below. When a bare
+git repository is detected as destination, __sqlite2dir__ will refuse
+to operate unless __\--git-name__ and __\--git-email__ are given;
+__sqlite2dir__ will currently not consulting the user's git
+configuration for these values.
+
+When *output-directory* does not exist, and any of the __\--git-...__
+options is specified, a new bare git repository is created with the
+given directory. The directory name given is taken literally, no
+".git" is appended if it is missing.
+
+Note that __sqlite2dir__ uses `libgit2` for its git support, not the
+__git__ command-line executable. This mean that its resource profile
+should be very lightweight, making it realistic to run it very
+frequently with minimal impact to system load, at least for small
+databases. Also, as might be expected, `git` doesn't need to be
+installed to make use of the git support.
+
+# OUTPUT FORMAT
+
+__sqlite2dir__ produces a tree of files based on the content of the
+database. The structure and contents of the directory tree are chosen
+such that no exported information is lost or mangled, and such that
+tools designed to operate on plain-text files, like diff(1) or git(1)
+work reasonably well.
+
+The format of the __sqlite2dir__ output is informally described below,
+but be aware that this format does not yet come with any stability
+guarantees. However, there will be an attempt to keep the format
+relatively stable, and not change the format on patch version
+bumps. For example, any 0.1.x release of __sqlite2dir__ should produce
+the same output format.
+
+The directories produced are:
+
+`schema/table`
+: For each table, stores a file with the SQL schema definition for
+  that table.
+
+`schema/index`
+: Analogous to `schema/table`, stores the index SQL schema
+  definitions, one file per index.
+
+`data/table`
+: For each table, stores a file containing the table contents, one row
+  per line. Each line contains a JSON array, where the SQLite data
+  types are represented like this:
+
+  - Integers and reals are mapped to JSON numbers. The serialization
+    mechanism used ensures faithful integer representation, but does
+    not guarantee roundtrip-ability for reals.
+
+  - Text is stored is mapped to JSON strings.
+
+  - Blobs are currently not supported. This is considered a bug.
 
 # EXIT STATUS
 

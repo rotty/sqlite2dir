@@ -3,10 +3,14 @@
 `sqlite2dir` exposes the contents of an SQLite 3 database as a
 collection of plain-text files. It's intended use case is not for
 database backups -- the view provided is intended to allow humans to
-more easily inspect and track changes to an SQLite database. To that
-end, `sqlite2dir` also supports committing the resulting tree of files
-to a bare git repository, which allows inspecting the history of
-changes using regular git tools.
+more easily inspect and track changes to an SQLite database. The
+output format is chosen so that tools designed to operate on
+plain-text files, like `diff` and `git` should work well.
+
+To allow for change tracking, `sqlite2dir` supports committing the
+tree of files resulting from the database export directly to a bare
+git repository, which allows inspecting the history of changes using
+regular git tools.
 
 Note that `sqlite2dir` is currently in its initial development phase,
 and hasn't even been deployed by its author. The usual caveats apply.
@@ -102,6 +106,7 @@ perceived importance.
 - [X] Pull email and username from the git config, if not given on the
       command line. Add a `--git` switch to enforce git operation the
       absence of other `--git-...` options.
+- [X] Document the output format used.
 - [X] Add options `--git-diff` and `--git-diff-exit-code`, which can
       be used for monitoring purposes.
 - [X] Write a proper manual page.
@@ -120,6 +125,13 @@ perceived importance.
 - Additional database backends. I don't anticipate having the need for
   this feature, so I probably won't add it myself. Pull requests
   welcome!
+
+## Non-features
+
+`sqlite2dir` is not, is not intended to be, and will, in all
+likelihood, never become a database backup tool. SQLite provides the
+`.dump` and `.backup` meta-commands, these should be used
+instead. That way, it is even possible to restore the data!
 
 ## Example use case
 
