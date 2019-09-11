@@ -1,6 +1,7 @@
 use std::{io, path::PathBuf};
 
 use failure::{format_err, ResultExt};
+use once_cell::unsync::Lazy;
 use structopt::StructOpt;
 
 use sqlite2dir::{dir, git, Db, Sink, TableSink};
@@ -39,11 +40,59 @@ struct Opt {
     git_diff_exit_code: bool,
 }
 
+// This is probably a bit overengineered, but this way, we only access the confg
+// if needed.
+//
+// Future TODO: with named existential types (see
+// <https://github.com/rust-lang/rfcs/pull/2515>), this could be nicely
+// abstracted away into the `git` module. The issue here is that I don't see how
+// to get a good API withou being able to assign a publicly namable type to the
+// `F` instance that refers to the closure loading the config.
+type LazyConfig<F> = Lazy<Result<git2::Config, git::Error>, F>;
+
+fn config_fallback<T, F>(
+    value: Option<T>,
+    cfg: &LazyConfig<F>,
+    name: &str,
+) -> Result<String, failure::Error>
+where
+    F: FnOnce() -> Result<git2::Config, git::Error>,
+    T: Into<String>,
+{
+    value.map(Into::into).map_or_else(
+        || match Lazy::force(cfg) {
+            Ok(cfg) => Ok(cfg.get_string(name).map_err(Into::<git::Error>::into)?),
+            Err(e) => Err(format_err!(r#"could not load git config: {}"#, e)),
+        },
+        Ok,
+    )
+}
+
 impl Opt {
-    fn git_authored(&self) -> Result<Option<git2::Signature>, git2::Error> {
-        match (&self.git_name, &self.git_email) {
-            (Some(name), Some(email)) => Ok(Some(git2::Signature::now(name, email)?)),
-            _ => Ok(None),
+    fn git_name(&self) -> Option<&str> {
+        self.git_name.as_ref().map(String::as_str)
+    }
+    fn git_email(&self) -> Option<&str> {
+        self.git_email.as_ref().map(String::as_str)
+    }
+    fn git_authored(&self, repo: &git::Repo) -> Result<git2::Signature, failure::Error> {
+        let config = Lazy::new(move || -> Result<git2::Config, git::Error> {
+            Ok(repo.config()?.snapshot()?)
+        });
+        let name = config_fallback(self.git_name(), &config, "user.name");
+        let email = config_fallback(self.git_email(), &config, "user.email");
+
+        match (name, email) {
+            (Ok(name), Ok(email)) => Ok(git2::Signature::now(&name, &email)?),
+            (name, email) => Err(format_err!(
+                "git authorship information missing from command-line and git configuration:\n    {}",
+                name.err()
+                    .iter()
+                    .chain(email.err().iter())
+                    .map(ToString::to_string)
+                    .collect::<Vec<String>>()
+                    .join("\n    ")
+            )),
         }
     }
     fn git_message(&self) -> &str {
@@ -133,18 +182,14 @@ fn run(opt: &Opt) -> Result<i32, failure::Error> {
     let mut db = Db::open(&opt.db_filename)?;
     match git::Repo::open(&opt.output_dir) {
         Ok(repo) => {
-            let authored = opt.git_authored()?.ok_or_else(|| {
-                format_err!("git destination detected, but required options not provided")
-            })?;
+            let authored = opt.git_authored(&repo)?;
             run_with_git(&mut db, &repo, &authored, &opt)
         }
         Err(e) => {
             if opt.use_git() {
                 if let Some(git2::ErrorCode::NotFound) = e.code() {
-                    let authored = opt.git_authored()?.ok_or_else(|| {
-                        format_err!("git mode requested, but required options not provided")
-                    })?;
                     let repo = git::Repo::create(&opt.output_dir)?;
+                    let authored = opt.git_authored(&repo)?;
                     run_with_git(&mut db, &repo, &authored, &opt)
                 } else {
                     Err(format_err!(

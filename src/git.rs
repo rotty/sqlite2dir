@@ -44,7 +44,7 @@ impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             Error::Io(e) => write!(f, "I/O error: {}", e),
-            Error::Git(e) => write!(f, "git error: {}", e),
+            Error::Git(e) => write!(f, "git error: {}", e.message()),
         }
     }
 }
@@ -64,6 +64,10 @@ impl Repo {
         Ok(Repo {
             repo: git2::Repository::init_bare(path)?,
         })
+    }
+
+    pub fn config(&self) -> Result<git2::Config, Error> {
+        Ok(self.repo.config()?)
     }
 
     pub fn tree(&self) -> Result<TreeSink, Error> {
