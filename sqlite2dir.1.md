@@ -24,9 +24,13 @@ When *output-directory* already exists, and it contains a git bare
 repository, the git support is enabled, and a new commit will be added
 to the repository when the database content changed from the
 repository `HEAD` commit. The commit metadata can be influenced by the
-various `--git-...` options, which are documented below.
+various `--git-...` options, which are documented below. When a bare
+git repository is detected as destination, `sqlite2dir` will refuse to
+operate unless `--git-name` and `--git-email` are given; `sqlite2dir`
+will currently not consulting the user's git configuration for these
+values.
 
-Note that `sqlite2dir1` uses `libgit2` for its git support, not the
+Note that `sqlite2dir` uses `libgit2` for its git support, not the
 `git` command-line executable. This mean that its resource profile
 should be very lightweight, making it realistic to run it very
 frequently with minimal impact to system load, at least for small
