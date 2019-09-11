@@ -98,7 +98,7 @@ perceived importance.
 
 - [X] **Only commit when the tree actually changed**.
 - [X] Create the bare git repository if it doesn't exist.
-- [ ] Run all SQLite queries inside a transaction.
+- [X] Run all SQLite queries inside a transaction.
 - [ ] Pull email and username from the git config, if not given on the
       command line. Add a `--git` switch to enforce git operation the
       absence of other `--git-...` options.

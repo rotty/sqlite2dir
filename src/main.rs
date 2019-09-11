@@ -61,15 +61,16 @@ impl Opt {
     }
 }
 
-fn fill_sink(sink: &mut impl Sink, db: &Db) -> Result<(), failure::Error> {
-    let schema = db
+fn fill_sink(sink: &mut impl Sink, db: &mut Db) -> Result<(), failure::Error> {
+    let tx = db.transaction()?;
+    let schema = tx
         .read_schema()
         .with_context(|e| format!("could not read schema: {}", e))?;
     for entry in &schema {
         sink.write_schema_entry(&entry)?;
         if entry.kind == "table" {
             let mut table = sink.open_table(&entry.tbl_name)?;
-            let mut stmt = db.read_table(entry)?;
+            let mut stmt = tx.read_table(entry)?;
             let mut rows = stmt.query()?;
             while let Some(row) = rows.next()? {
                 table.write_row(row).with_context(|e| {
@@ -97,13 +98,13 @@ fn show_diff_line(mut writer: impl io::Write, line: &git2::DiffLine) -> io::Resu
 }
 
 fn run_with_git(
-    db: &Db,
+    db: &mut Db,
     repo: &git::Repo,
     authored: &git2::Signature,
     opt: &Opt,
 ) -> Result<i32, failure::Error> {
     let mut tree = repo.tree()?;
-    fill_sink(&mut tree, &db)?;
+    fill_sink(&mut tree, db)?;
     let diff = repo.commit(opt.git_message(), &authored, tree)?;
     if opt.git_diff {
         let stdout = io::stdout();
@@ -129,13 +130,13 @@ fn run_with_git(
 }
 
 fn run(opt: &Opt) -> Result<i32, failure::Error> {
-    let db = Db::open(&opt.db_filename)?;
+    let mut db = Db::open(&opt.db_filename)?;
     match git::Repo::open(&opt.output_dir) {
         Ok(repo) => {
             let authored = opt.git_authored()?.ok_or_else(|| {
                 format_err!("git destination detected, but required options not provided")
             })?;
-            run_with_git(&db, &repo, &authored, &opt)
+            run_with_git(&mut db, &repo, &authored, &opt)
         }
         Err(e) => {
             if opt.use_git() {
@@ -144,7 +145,7 @@ fn run(opt: &Opt) -> Result<i32, failure::Error> {
                         format_err!("git mode requested, but required options not provided")
                     })?;
                     let repo = git::Repo::create(&opt.output_dir)?;
-                    run_with_git(&db, &repo, &authored, &opt)
+                    run_with_git(&mut db, &repo, &authored, &opt)
                 } else {
                     Err(format_err!(
                         "could not open destination as bare git repository: {}",
@@ -153,7 +154,7 @@ fn run(opt: &Opt) -> Result<i32, failure::Error> {
                 }
             } else {
                 let mut sink = dir::Sink::open(&opt.output_dir)?;
-                fill_sink(&mut sink, &db)?;
+                fill_sink(&mut sink, &mut db)?;
                 Ok(0)
             }
         }
