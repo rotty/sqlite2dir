@@ -26,7 +26,7 @@ man -l sqlite2dir.1
 
 As `sqlite2dir` is written in Rust, you need a [Rust toolchain]. Rust
 1.37 or newer is required. To obtain the latest release from
-[`crates.io`], use:
+[crates.io], use:
 
 ```sh
 cargo install sqlite2dir
@@ -155,5 +155,5 @@ the [GNU GPL](./LICENSE), version 3.0 or later, at your option.
 
 [Rust toolchain]: https://www.rust-lang.org/tools/install
 [PowerDNS]: https://www.powerdns.com/
-[`crates.io`]: https://crates.io/
+[crates.io]: https://crates.io/
 [pandoc]: https://pandoc.org/
