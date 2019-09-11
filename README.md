@@ -112,6 +112,15 @@ perceived importance.
       `{"blob-sha3-256": "SHA-3-here"}`. An improvement would be to
       base64-encode small blobs, and store them inline.
 
+## Possible future features
+
+- Add support for a `--run` argument, to specify a config file
+   allowing for multiple DB extractions in a single run.
+- With `--run`, add possibility for multi-threaded operation.
+- Additional database backends. I don't anticipate having the need for
+  this feature, so I probably won't add it myself. Pull requests
+  welcome!
+
 ## Example use case
 
 This is the scenario which prompted the development of `sqlite2dir`.
