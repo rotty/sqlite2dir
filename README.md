@@ -19,7 +19,12 @@ and hasn't even been deployed by its author. The usual caveats apply.
 
 The documentation for `sqlite2dir` comes in the form of [man
 page](./sqlite2dir.1.md). The markdown file can be turned in to troff
-format for viewing with the `man` command using [pandoc]:
+format for viewing with the `man` command using [pandoc]. Note that to
+the markdown source is tailored toward producing good output when fed
+through pandoc, and will not be rendered nicely on github or alike,
+and is not ideal to read in plain, either.
+
+Generate and view the man page using the Unix `man` command:
 
 ```sh
 pandoc -s -t man sqlite2dir.1.md -o sqlite2dir.1
@@ -99,17 +104,9 @@ features" below for details.
 ## Planned features
 
 These features are planned, roughly in the order of the author's
-perceived importance. This section serves as an "upcoming features"
-list, checked items will be retired to the [changelog](./NEWS.md) upon
-release.
+perceived importance. The git version of this README will have items
+checked, indicating already implemented, but yet unreleased features.
 
-- [X] Create the bare git repository if it doesn't exist.
-- [X] Run all SQLite queries inside a transaction.
-- [X] Pull email and username from the git config, if not given on the
-      command line. Add a `--git` switch to enforce git operation the
-      absence of other `--git-...` options.
-- [X] Document the output format used.
-- [X] Write a proper manual page.
 - [ ] A test harness including some basic smoke tests.
 - [ ] Support for the SQLite "blob" data type. A basic implementation
       would be to hash the blob content, and spit it out disk as its
