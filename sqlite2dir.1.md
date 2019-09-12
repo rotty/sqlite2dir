@@ -1,6 +1,6 @@
 % sqlite2dir(1) sqlite2dir User Manual
 % Andreas Rottmann
-% September 11, 2019
+% September 12, 2019
 
 # NAME
 
@@ -111,6 +111,8 @@ The directories produced are:
 : For each table, stores a file containing the table contents, one row
   per line. Each line contains a JSON array, where the SQLite data
   types are represented like this:
+
+  - SQL `NULL` is mapped to JSON `null` -- no surprises here.
 
   - Integers and reals are mapped to JSON numbers. The serialization
     mechanism used ensures faithful integer representation, but does
