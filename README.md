@@ -21,10 +21,10 @@ The documentation for `sqlite2dir` comes in the form of [man
 page](./sqlite2dir.1.md). The markdown file can be turned in to troff
 format for viewing with the `man` command using [pandoc]:
 
-``sh
+```sh
 pandoc -s -t man sqlite2dir.1.md -o sqlite2dir.1
 man -l sqlite2dir.1
-``
+```
 
 ## Installation
 
@@ -45,8 +45,8 @@ cargo run -- db.sqlite3 db-contents
 
 To install from locally checked-out source, use `cargo install --path
 .`, which will end up installing the executable in
-`~/.cargo/bin/sqlite2dir`, which should be in your `PATH` environment
-variable, if you followed the Rust toolchain installations
+`~/.cargo/bin/sqlite2dir`, which should already be in your `PATH`
+environment variable, if you followed the Rust toolchain installations
 instructions.
 
 ### Static build
@@ -65,7 +65,8 @@ rustup target add x86_64-unknown-linux-musl
 # Build using a compiled-in copy of libsqlite3
 cargo build --target x86_64-unknown-linux-musl --features vendored-sqlite --release
 # Let's check it's really a static binary
-file file target/x86_64-unknown-linux-musl/release/sqlite2dir | grep -q 'statically linked' || echo "nope"
+file file target/x86_64-unknown-linux-musl/release/sqlite2dir \
+  | grep -q 'statically linked' || echo "nope"
 ```
 
 ## Usage
@@ -98,17 +99,16 @@ features" below for details.
 ## Planned features
 
 These features are planned, roughly in the order of the author's
-perceived importance.
+perceived importance. This section serves as an "upcoming features"
+list, checked items will be retired to the [changelog](./NEWS.md) upon
+release.
 
-- [X] **Only commit when the tree actually changed**.
 - [X] Create the bare git repository if it doesn't exist.
 - [X] Run all SQLite queries inside a transaction.
 - [X] Pull email and username from the git config, if not given on the
       command line. Add a `--git` switch to enforce git operation the
       absence of other `--git-...` options.
 - [X] Document the output format used.
-- [X] Add options `--git-diff` and `--git-diff-exit-code`, which can
-      be used for monitoring purposes.
 - [X] Write a proper manual page.
 - [ ] A test harness including some basic smoke tests.
 - [ ] Support for the SQLite "blob" data type. A basic implementation
@@ -130,8 +130,9 @@ perceived importance.
 
 `sqlite2dir` is not, is not intended to be, and will, in all
 likelihood, never become a database backup tool. SQLite provides the
-`.dump` and `.backup` meta-commands, these should be used
-instead. That way, it is even possible to restore the data!
+`.dump` and `.backup` meta-commands its command-line tool, these
+should be used instead. That way, it is even possible to restore the
+data!
 
 ## Example use case
 
