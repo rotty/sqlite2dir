@@ -25,7 +25,7 @@ created by __sqlite2dir__. This is not the case when the git mode is
 used, which can be enabled by any of the __\--git-...__ options, and
 is automatically enabled when *output-directory* is identified as bare
 git repository. Git mode is described in more detail in the section
-"GIT MODE".
+"__GIT MODE__".
 
 # OPTIONS
 
