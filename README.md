@@ -31,6 +31,9 @@ pandoc -s -t man sqlite2dir.1.md -o sqlite2dir.1
 man -l sqlite2dir.1
 ```
 
+You can also find a pandoc HTML rendering of the manpage
+[online](https://r0tty.org/software/sqlite2dir.1.html).
+
 ## Installation
 
 As `sqlite2dir` is written in Rust, you need a [Rust toolchain]. Rust
@@ -65,12 +68,12 @@ In this case, you need to enable the `vendored-sqlite` feature flag to
 link against an embedded, newly-compiled, copy of `libsqlite3`:
 
 ```sh
-# If you haven't installed the MUSL target already, let's do that now":
+# If you haven't installed the MUSL target already, let's do that now:
 rustup target add x86_64-unknown-linux-musl
 # Build using a compiled-in copy of libsqlite3
 cargo build --target x86_64-unknown-linux-musl --features vendored-sqlite --release
 # Let's check it's really a static binary
-file file target/x86_64-unknown-linux-musl/release/sqlite2dir \
+file target/x86_64-unknown-linux-musl/release/sqlite2dir \
   | grep -q 'statically linked' || echo "nope"
 ```
 
@@ -104,15 +107,17 @@ features" below for details.
 ## Planned features
 
 These features are planned, roughly in the order of the author's
-perceived importance. The git version of this README will have items
-checked, indicating already implemented, but yet unreleased features.
+perceived importance. During development, items will be moved from
+below into the [changelog](./NEWS.md) upon completion.
 
-- [ ] A test harness including some basic smoke tests.
-- [ ] Support for the SQLite "blob" data type. A basic implementation
-      would be to hash the blob content, and spit it out disk as its
-      own file. The DB column would then contain a reference like
-      `{"blob-sha3-256": "SHA-3-here"}`. An improvement would be to
-      base64-encode small blobs, and store them inline.
+- An option to generate a short report, suitable as an email message
+  body.
+- A test harness including some basic smoke tests.
+- Support for the SQLite "blob" data type. A basic implementation
+  would be to hash the blob content, and spit it out disk as its own
+  file. The DB column would then contain a reference like
+  `{"blob-sha3-256": "SHA-3-here"}`. An improvement would be to
+  base64-encode small blobs, and store them inline.
 
 ## Possible future features
 
