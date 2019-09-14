@@ -1,7 +1,7 @@
-# 0.2.0 (unreleased)
+# 0.2.0
 
-The output format remains unchanged, the minor version bump is due to
-major code changes and several new features.
+The output format remains unchanged, the version bump is due to major
+code changes and several new features.
 
 General:
 
