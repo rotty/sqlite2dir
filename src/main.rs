@@ -1,6 +1,6 @@
 use std::{io, path::PathBuf};
 
-use failure::{format_err, ResultExt};
+use anyhow::{format_err, Context as _};
 use once_cell::unsync::Lazy;
 use structopt::StructOpt;
 
@@ -54,7 +54,7 @@ fn config_fallback<T, F>(
     value: Option<T>,
     cfg: &LazyConfig<F>,
     name: &str,
-) -> Result<String, failure::Error>
+) -> anyhow::Result<String>
 where
     F: FnOnce() -> Result<git2::Config, git::Error>,
     T: Into<String>,
@@ -75,7 +75,7 @@ impl Opt {
     fn git_email(&self) -> Option<&str> {
         self.git_email.as_ref().map(String::as_str)
     }
-    fn git_authored(&self, repo: &git::Repo) -> Result<git2::Signature, failure::Error> {
+    fn git_authored(&self, repo: &git::Repo) -> anyhow::Result<git2::Signature> {
         let config = Lazy::new(move || -> Result<git2::Config, git::Error> {
             Ok(repo.config()?.snapshot()?)
         });
@@ -110,11 +110,9 @@ impl Opt {
     }
 }
 
-fn fill_sink(sink: &mut impl Sink, db: &mut Db) -> Result<(), failure::Error> {
+fn fill_sink(sink: &mut impl Sink, db: &mut Db) -> anyhow::Result<()> {
     let tx = db.transaction()?;
-    let schema = tx
-        .read_schema()
-        .with_context(|e| format!("could not read schema: {}", e))?;
+    let schema = tx.read_schema().context("unable to read schema")?;
     for entry in &schema {
         sink.write_schema_entry(&entry)?;
         if entry.kind == "table" {
@@ -122,9 +120,9 @@ fn fill_sink(sink: &mut impl Sink, db: &mut Db) -> Result<(), failure::Error> {
             let mut stmt = tx.read_table(entry)?;
             let mut rows = stmt.query()?;
             while let Some(row) = rows.next()? {
-                table.write_row(row).with_context(|e| {
-                    format!("while writing row of table {}: {}", entry.tbl_name, e)
-                })?;
+                table
+                    .write_row(row)
+                    .with_context(|| format!("error writing row of table {}", entry.tbl_name))?;
             }
             sink.close_table(table)?;
         }
@@ -151,7 +149,7 @@ fn run_with_git(
     repo: &git::Repo,
     authored: &git2::Signature,
     opt: &Opt,
-) -> Result<i32, failure::Error> {
+) -> anyhow::Result<i32> {
     let mut tree = repo.tree()?;
     fill_sink(&mut tree, db)?;
     let diff = repo.commit(opt.git_message(), &authored, tree)?;
@@ -178,7 +176,7 @@ fn run_with_git(
     Ok(rc)
 }
 
-fn run(opt: &Opt) -> Result<i32, failure::Error> {
+fn run(opt: &Opt) -> anyhow::Result<i32> {
     let mut db = Db::open(&opt.db_filename)?;
     match git::Repo::open(&opt.output_dir) {
         Ok(repo) => {
@@ -206,12 +204,18 @@ fn run(opt: &Opt) -> Result<i32, failure::Error> {
     }
 }
 
-fn main() -> Result<(), failure::Error> {
+fn main() -> anyhow::Result<()> {
     let opt = Opt::from_args();
     let rc = match run(&opt) {
         Ok(rc) => rc,
         Err(e) => {
-            eprintln!("{}", e);
+            for (i, e) in e.chain().enumerate() {
+                if i == 0 {
+                    eprintln!("{}", e);
+                } else {
+                    eprintln!("caused by: {}", e);
+                }
+            }
             if opt.git_diff_exit_code {
                 2
             } else {
