@@ -70,10 +70,10 @@ where
 
 impl Opt {
     fn git_name(&self) -> Option<&str> {
-        self.git_name.as_ref().map(String::as_str)
+        self.git_name.as_deref()
     }
     fn git_email(&self) -> Option<&str> {
-        self.git_email.as_ref().map(String::as_str)
+        self.git_email.as_deref()
     }
     fn git_authored(&self, repo: &git::Repo) -> anyhow::Result<git2::Signature> {
         let config = Lazy::new(move || -> Result<git2::Config, git::Error> {
@@ -97,8 +97,7 @@ impl Opt {
     }
     fn git_message(&self) -> &str {
         self.git_message
-            .as_ref()
-            .map(|msg| msg.as_str())
+            .as_deref()
             .unwrap_or("sqlite2dir auto-commit")
     }
     fn use_git(&self) -> bool {
