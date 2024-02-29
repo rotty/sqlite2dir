@@ -113,7 +113,7 @@ fn fill_sink(sink: &mut impl Sink, db: &mut Db) -> anyhow::Result<()> {
     let tx = db.transaction()?;
     let schema = tx.read_schema().context("unable to read schema")?;
     for entry in &schema {
-        sink.write_schema_entry(&entry)?;
+        sink.write_schema_entry(entry)?;
         if entry.kind == "table" {
             let mut table = sink.open_table(&entry.tbl_name)?;
             let mut stmt = tx.read_table(entry)?;
@@ -151,7 +151,7 @@ fn run_with_git(
 ) -> anyhow::Result<i32> {
     let mut tree = repo.tree()?;
     fill_sink(&mut tree, db)?;
-    let diff = repo.commit(opt.git_message(), &authored, tree)?;
+    let diff = repo.commit(opt.git_message(), authored, tree)?;
     if opt.git_diff {
         let stdout = io::stdout();
         let stdout = stdout.lock();
@@ -180,14 +180,14 @@ fn run(opt: &Opt) -> anyhow::Result<i32> {
     match git::Repo::open(&opt.output_dir) {
         Ok(repo) => {
             let authored = opt.git_authored(&repo)?;
-            run_with_git(&mut db, &repo, &authored, &opt)
+            run_with_git(&mut db, &repo, &authored, opt)
         }
         Err(e) => {
             if opt.use_git() {
                 if let Some(git2::ErrorCode::NotFound) = e.code() {
                     let repo = git::Repo::create(&opt.output_dir)?;
                     let authored = opt.git_authored(&repo)?;
-                    run_with_git(&mut db, &repo, &authored, &opt)
+                    run_with_git(&mut db, &repo, &authored, opt)
                 } else {
                     Err(format_err!(
                         "could not open destination as bare git repository: {}",

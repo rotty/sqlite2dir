@@ -104,8 +104,8 @@ impl Repo {
                 .collect::<Result<_, _>>()?;
             self.repo.commit(
                 Some("HEAD"),
-                &authored,
-                &authored,
+                authored,
+                authored,
                 message,
                 &tree,
                 &parent_commits.iter().collect::<Vec<_>>(),
@@ -130,7 +130,7 @@ impl<'repo> Sink for TreeSink<'repo> {
             let oid = self.repo.blob(sql.as_bytes()).map_err(other_io_error)?;
             self.schema_entries
                 .entry(entry.kind.clone())
-                .or_insert_with(Vec::new)
+                .or_default()
                 .push((entry.name.clone(), oid));
         }
         Ok(())
@@ -195,7 +195,7 @@ pub struct GitTable {
     content: Vec<u8>,
 }
 
-impl<'repo> TableSink for GitTable {
+impl TableSink for GitTable {
     fn write_row(&mut self, row: &rusqlite::Row) -> io::Result<()> {
         write_json_row(&mut self.content, row)
     }
