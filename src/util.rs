@@ -8,12 +8,16 @@ pub fn other_io_error(e: impl std::error::Error + Send + Sync + 'static) -> io::
     io::Error::new(io::ErrorKind::Other, e)
 }
 
-pub fn write_json_row(mut sink: impl io::Write, row: &rusqlite::Row) -> io::Result<()> {
+pub fn write_json_row(
+    mut sink: impl io::Write,
+    row: &rusqlite::Row,
+    column_count: usize,
+) -> io::Result<()> {
     use rusqlite::types::ValueRef::*;
     // TODO: this could probably be made more efficient by using a
     // lower-level serialization interface.
-    let values: Vec<_> = (0..row.column_count())
-        .map(|i| match row.get_raw(i) {
+    let values: Vec<_> = (0..column_count)
+        .map(|i| match row.get_ref(i).expect("column not present") {
             Null => Ok(json::Value::Null),
             Integer(n) => Ok(json::Value::from(n)),
             Real(n) => Ok(json::Value::from(n)),

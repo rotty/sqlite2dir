@@ -117,10 +117,11 @@ fn fill_sink(sink: &mut impl Sink, db: &mut Db) -> anyhow::Result<()> {
         if entry.kind == "table" {
             let mut table = sink.open_table(&entry.tbl_name)?;
             let mut stmt = tx.read_table(entry)?;
+            let column_count = stmt.column_count();
             let mut rows = stmt.query()?;
             while let Some(row) = rows.next()? {
                 table
-                    .write_row(row)
+                    .write_row(row, column_count)
                     .with_context(|| format!("error writing row of table {}", entry.tbl_name))?;
             }
             sink.close_table(table)?;

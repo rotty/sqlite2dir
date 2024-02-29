@@ -196,7 +196,7 @@ pub struct GitTable {
 }
 
 impl TableSink for GitTable {
-    fn write_row(&mut self, row: &rusqlite::Row) -> io::Result<()> {
-        write_json_row(&mut self.content, row)
+    fn write_row(&mut self, row: &rusqlite::Row, column_count: usize) -> io::Result<()> {
+        write_json_row(&mut self.content, row, column_count)
     }
 }

@@ -54,7 +54,7 @@ pub struct FileTable {
 }
 
 impl TableSink for FileTable {
-    fn write_row(&mut self, row: &rusqlite::Row) -> io::Result<()> {
-        write_json_row(&mut self.file, row)
+    fn write_row(&mut self, row: &rusqlite::Row, column_count: usize) -> io::Result<()> {
+        write_json_row(&mut self.file, row, column_count)
     }
 }

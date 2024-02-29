@@ -1,6 +1,6 @@
 use std::path::Path;
 
-use rusqlite::{Connection, OpenFlags, Row, NO_PARAMS};
+use rusqlite::{Connection, OpenFlags, Row};
 
 use crate::SchemaEntry;
 
@@ -31,7 +31,7 @@ impl<'conn> Transaction<'conn> {
         let mut sqlite_master = self
             .tx
             .prepare("SELECT type, name, tbl_name, sql FROM sqlite_master")?;
-        let schema_iter = sqlite_master.query_map(NO_PARAMS, |row| self.read_schema_entry(row))?;
+        let schema_iter = sqlite_master.query_map([], |row| self.read_schema_entry(row))?;
         let entries = schema_iter.collect::<Result<_, _>>()?;
         Ok(entries)
     }
@@ -40,7 +40,7 @@ impl<'conn> Transaction<'conn> {
         let name = row.get(1)?;
         let mut tbl_info = self.tx.prepare(&format!("PRAGMA table_info({})", name))?;
         let column_names = tbl_info
-            .query_map(NO_PARAMS, |row| row.get(1))?
+            .query_map([], |row| row.get(1))?
             .collect::<Result<_, _>>()?;
         Ok(SchemaEntry {
             kind: row.get(0)?,
@@ -64,7 +64,11 @@ pub struct TableReader<'conn> {
 }
 
 impl<'conn> TableReader<'conn> {
+    pub fn column_count(&self) -> usize {
+        self.stmt.column_count()
+    }
+
     pub fn query(&mut self) -> rusqlite::Result<rusqlite::Rows> {
-        self.stmt.query(NO_PARAMS)
+        self.stmt.query([])
     }
 }

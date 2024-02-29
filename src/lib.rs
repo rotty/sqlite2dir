@@ -20,7 +20,7 @@ pub trait Sink {
 }
 
 pub trait TableSink {
-    fn write_row(&mut self, row: &rusqlite::Row) -> io::Result<()>;
+    fn write_row(&mut self, row: &rusqlite::Row, column_count: usize) -> io::Result<()>;
 }
 
 #[derive(Debug)]
